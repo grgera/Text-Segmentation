@@ -5,13 +5,14 @@ from pytorch_lightning import Trainer
 import os, argparse, glob, itertools, random
 from pytorch_lightning.loggers import WandbLogger
 from sklearn.utils.class_weight import compute_class_weight
+from transformers import AutoTokenizer, AutoModelForTokenClassification, AutoModel
 
 from transformers import logging
 logging.set_verbosity_error()
 
 from train import _sbert_preprocess
 from train import _labse_preprocess
-from bert_data import BERT_DataModule
+from data_module import DataModule
 from bert import BERT_Model
 from bilstm import BILSTM_Model
 from utils import *
@@ -36,11 +37,11 @@ def test(args, config):
 
     if args.emb_type == 'SBERT':
         cnf = config['sbert']
-        datasets = _sbert_preprocess(args, cnf, num_classes, dataframe)
+        datasets, _ = _sbert_preprocess(args, cnf, num_classes, dataframe)
 
     if args.emb_type == 'LABSE':
         cnf = config['labse']
-        datasets = _labse_preprocess(args, cnf, num_classes, dataframe) 
+        datasets, _ = _labse_preprocess(args, cnf, num_classes, dataframe) 
 
     if args.sec_model == 'BERT':
         bert_base = AutoModelForTokenClassification.from_pretrained(cnf['bert_checkpoint'])

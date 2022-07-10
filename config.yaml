@@ -4,7 +4,7 @@ seed: 42
 wandb:
     save_dir: './logging'
     checkpoint_directory: './models_checkpoint'
-    offline: True #CHANGE IT
+    offline: False
     project: 'Segmentation-Texts'
     progress_bar_refresh_rate: 10
 

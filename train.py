@@ -4,6 +4,7 @@ import torch
 import warnings
 import numpy as np
 import torch.nn as nn
+from tqdm.auto import tqdm
 import pytorch_lightning as pl
 from transformers import logging
 import torch.nn.functional as F
@@ -49,7 +50,7 @@ def _sbert_preprocess(args, cnf, num_classes, dataframe):
 
     train_dataset, val_dataset, test_dataset = sbert_emb.get_dataset('train'), sbert_emb.get_dataset('eval'), sbert_emb.get_dataset('test')
     datasets = [train_dataset, val_dataset, test_dataset]
-    return datasets
+    return datasets, class_weight
 
 def _labse_preprocess(args, cnf, num_classes, dataframe):
     """
@@ -58,13 +59,15 @@ def _labse_preprocess(args, cnf, num_classes, dataframe):
     class_weight = cnf["class_weight"]
     labse_tokenizer = AutoTokenizer.from_pretrained(cnf['lb_checkpoint'])
     labse_model = AutoModel.from_pretrained(cnf['lb_checkpoint'])
+
     labse_emb = LaBSE_Embedding(dataframe, labse_model, labse_tokenizer, batch_size=cnf['batch_size'], binary_mode=args.binary_mode)
 
     if num_classes == 2:
         class_weight = labse_emb.get_class_weight()
     
     datasets = labse_emb.get_datasets()
-    return datasets
+
+    return datasets, class_weight
 
 def train(args, config):
     dataframe = get_data()
@@ -89,16 +92,16 @@ def train(args, config):
 
     if args.emb_type == 'SBERT':
         cnf = config['sbert']
-        datasets = _sbert_preprocess(args, cnf, num_classes, dataframe)
+        datasets, class_w = _sbert_preprocess(args, cnf, num_classes, dataframe)
 
     if args.emb_type == 'LABSE':
         cnf = config['labse']
-        datasets = _labse_preprocess(args, cnf, num_classes, dataframe) 
+        datasets, class_w = _labse_preprocess(args, cnf, num_classes, dataframe) 
 
     if args.sec_model == 'BERT':
         bert_base = AutoModelForTokenClassification.from_pretrained(cnf['bert_checkpoint'])
         data = DataModule(datasets, cnf['batch_size'])
-        full_model = BERT_Model(bert_base, cnf['emb_type'], cnf['freeze_bert'], cnf['learning_rate'], class_weight, num_classes)
+        full_model = BERT_Model(bert_base, cnf['emb_type'], cnf['freeze_bert'], cnf['learning_rate'], class_w, num_classes)
 
         print('Training process starts!\n')
         _train_stage(full_model, data, epochs=7, log=wandb_logger, callb=[callbacks, progress_bar])
@@ -111,7 +114,7 @@ def train(args, config):
         full_model = BILSTM_Model(**cnf, num_classes=num_classes)
 
         print('Training process starts!\n')
-        _train_stage(full_model, data, epochs=10, log=wandb_logger, callb=[callbacks, progress_bar])
+        _train_stage(full_model, data, epochs=7, log=wandb_logger, callb=[callbacks, progress_bar])
 
 def main():
     print('Training preprocessing...\n')
