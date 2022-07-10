@@ -114,7 +114,7 @@ def train(args, config):
         full_model = BILSTM_Model(**cnf, num_classes=num_classes)
 
         print('Training process starts!\n')
-        _train_stage(full_model, data, epochs=7, log=wandb_logger, callb=[callbacks, progress_bar])
+        _train_stage(full_model, data, epochs=5, log=wandb_logger, callb=[callbacks, progress_bar])
 
 def main():
     print('Training preprocessing...\n')

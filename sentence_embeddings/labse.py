@@ -3,6 +3,7 @@ import re
 import torch
 import numpy as np
 import torch.nn as nn
+from tqdm.auto import tqdm
 import torch.nn.functional as F
 from sklearn.utils.class_weight import compute_class_weight
 from torch.utils.data import TensorDataset, DataLoader
@@ -116,7 +117,7 @@ class LaBSE_Embedding(nn.Module):
 
         self.model.eval()
         with torch.no_grad():
-            for batch in dataloader:
+            for batch in tqdm(dataloader):
                 batch = [r.to(self.device) for r in batch]
 
                 model_output = self.model(batch[0], batch[1])
