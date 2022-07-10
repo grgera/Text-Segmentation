@@ -1,0 +1,4 @@
+wandb
+transformers
+pytorch-lightning
+sentence_transformers
